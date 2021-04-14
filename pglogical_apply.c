@@ -1490,7 +1490,7 @@ pglogical_execute_sql_command(char *cmdstr, char *role, bool isTopLevel)
 {
 	List	   *commands;
 	ListCell   *command_i;
-#ifdef PGXC
+#if PGXC && PG_VERSION_NUM < 100000
 	List	   *commandSourceQueries;
 	ListCell   *commandSourceQuery_i;
 #endif
@@ -1511,7 +1511,7 @@ pglogical_execute_sql_command(char *cmdstr, char *role, bool isTopLevel)
 	 * SQL query and can't handle multistatements this way so we need to get
 	 * individual statements using API provided by XL itself.
 	 */
-#ifdef PGXC
+#if PGXC && PG_VERSION_NUM < 100000
 	commands = pg_parse_query_get_source(cmdstr, &commandSourceQueries);
 #else
 	commands = pg_parse_query(cmdstr);
@@ -1526,7 +1526,7 @@ pglogical_execute_sql_command(char *cmdstr, char *role, bool isTopLevel)
 	 */
 	isTopLevel = isTopLevel && (list_length(commands) == 1);
 
-#ifdef PGXC
+#if PGXC && PG_VERSION_NUM < 100000
 	forboth(command_i, commands, commandSourceQuery_i, commandSourceQueries)
 #else
 	foreach(command_i, commands)
@@ -1540,7 +1540,7 @@ pglogical_execute_sql_command(char *cmdstr, char *role, bool isTopLevel)
 		int			save_nestlevel;
 		DestReceiver *receiver;
 
-#ifdef PGXC
+#if PGXC && PG_VERSION_NUM < 100000
 		cmdstr = (char *) lfirst(commandSourceQuery_i);
 		errcallback.arg = cmdstr;
 #endif
