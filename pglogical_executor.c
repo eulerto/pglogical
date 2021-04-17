@@ -263,7 +263,7 @@ pglogical_ProcessUtility(
 	#define		queryEnv NULL
 #endif
 #ifndef XCP
-	#define		sentToRemote NULL
+	#define		sentToRemote false
 #endif
 
 	dropping_pglogical_obj = false;

@@ -1760,6 +1760,9 @@ truncate_table(char *nspname, char *relname)
 	Oid				relid;
 	TruncateStmt   *truncate;
 	StringInfoData	sql;
+#if PGXC && PG_VERSION_NUM >= 100000
+	PlannedStmt	   *wrapper;
+#endif
 
 	rv = makeRangeVar(nspname, relname, -1);
 
@@ -1787,14 +1790,33 @@ truncate_table(char *nspname, char *relname)
 	 * for other utility statements, then we must take a careful relook.
 	 */
 #ifdef PGXC
+#if PG_VERSION_NUM >= 100000
+	/* need to make a wrapper PlannedStmt */
+	wrapper = makeNode(PlannedStmt);
+	wrapper->commandType = CMD_UTILITY;
+	wrapper->canSetTag = false;
+	wrapper->utilityStmt = (Node *) truncate;
+	wrapper->stmt_location = -1;
+	wrapper->stmt_len = -1;
+
+	standard_ProcessUtility(wrapper,
+							sql.data,
+							PROCESS_UTILITY_TOPLEVEL,
+							NULL,
+							NULL,
+							None_Receiver,
+							false,
+							NULL);
+#else
 	standard_ProcessUtility((Node *)truncate,
 			sql.data, PROCESS_UTILITY_TOPLEVEL, NULL, NULL,
 			false,
 			NULL
 			);
+#endif	/* PG_VERSION_NUM */
 #else
 	ExecuteTruncate(truncate);
-#endif
+#endif	/* PGXC */
 	/* release memory allocated to create SQL statement */
 	pfree(sql.data);
 

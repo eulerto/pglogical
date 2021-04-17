@@ -55,11 +55,21 @@
 
 #define makeDefElem(name, arg) makeDefElem(name, arg, -1)
 
+#ifdef PGXC
+#define PGLstandard_ProcessUtility(pstmt, queryString, context, params, queryEnv, dest, sentToRemote, qc) \
+	standard_ProcessUtility(pstmt, queryString, context, params, queryEnv, dest, sentToRemote, qc)
+#else
 #define PGLstandard_ProcessUtility(pstmt, queryString, context, params, queryEnv, dest, sentToRemote, qc) \
 	standard_ProcessUtility(pstmt, queryString, context, params, queryEnv, dest, qc)
+#endif
 
+#ifdef PGXC
+#define PGLnext_ProcessUtility_hook(pstmt, queryString, context, params, queryEnv, dest, sentToRemote, qc) \
+	next_ProcessUtility_hook(pstmt, queryString, context, params, queryEnv, dest, sentToRemote, qc)
+#else
 #define PGLnext_ProcessUtility_hook(pstmt, queryString, context, params, queryEnv, dest, sentToRemote, qc) \
 	next_ProcessUtility_hook(pstmt, queryString, context, params, queryEnv, dest, qc)
+#endif
 
 #define pgl_heap_attisnull(tup, attnum, tupledesc) \
 	heap_attisnull(tup, attnum)
