@@ -779,12 +779,13 @@ alter_replication_set(PGLogicalRepSet *repset)
 				if (targetrel->rd_indexvalid == 0)
 					RelationGetIndexList(targetrel);
 				if (!OidIsValid(targetrel->rd_replidindex) &&
+					targetrel->rd_rel->relreplident != REPLICA_IDENTITY_FULL &&
 					(repset->replicate_update || repset->replicate_delete))
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 							 errmsg("replication set %s cannot be altered to "
-									"replicate UPDATEs or DELETEs because it "
-									"contains tables without PRIMARY KEY",
+									"replicate UPDATEs and/or DELETEs because "
+									"it contains tables without PRIMARY KEY",
 									repset->name)));
 			}
 
@@ -1039,6 +1040,7 @@ replication_set_add_table(Oid setid, Oid reloid, List *att_list,
 	if (targetrel->rd_indexvalid == 0)
 		RelationGetIndexList(targetrel);
 	if (!OidIsValid(targetrel->rd_replidindex) &&
+		targetrel->rd_rel->relreplident != REPLICA_IDENTITY_FULL &&
 		(repset->replicate_update || repset->replicate_delete))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),

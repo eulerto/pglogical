@@ -11,6 +11,8 @@ CREATE TABLE public.test_publicschema(id serial primary key, data text);
 CREATE TABLE normalschema.test_normalschema(id serial primary key);
 CREATE TABLE "strange.schema-IS".test_strangeschema(id serial primary key);
 CREATE TABLE public.test_nopkey(id int);
+CREATE TABLE public.test_pkey_ri_full(id int primary key);
+ALTER TABLE public.test_pkey_ri_full REPLICA IDENTITY FULL;
 CREATE UNLOGGED TABLE public.test_unlogged(id int primary key);
 $$);
 
@@ -40,6 +42,7 @@ SELECT * FROM pglogical.replication_set_add_table('repset_replicate_insupd', '"s
 -- should fail
 SELECT * FROM pglogical.replication_set_add_table('repset_replicate_all', 'test_unlogged');
 SELECT * FROM pglogical.replication_set_add_table('repset_replicate_all', 'test_nopkey');
+SELECT * FROM pglogical.replication_set_add_table('repset_replicate_all', 'test_pkey_ri_full');
 -- success
 SELECT * FROM pglogical.replication_set_add_table('repset_replicate_instrunc', 'test_nopkey');
 SELECT * FROM pglogical.alter_replication_set('repset_replicate_insupd', replicate_truncate := true);
@@ -94,6 +97,7 @@ SELECT pglogical.replicate_ddl_command($$
 	DROP SCHEMA normalschema CASCADE;
 	DROP SCHEMA "strange.schema-IS" CASCADE;
 	DROP TABLE public.test_nopkey CASCADE;
+	DROP TABLE public.test_pkey_ri_full CASCADE;
 	DROP TABLE public.test_unlogged CASCADE;
 $$);
 

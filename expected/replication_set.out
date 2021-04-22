@@ -9,6 +9,8 @@ CREATE TABLE public.test_publicschema(id serial primary key, data text);
 CREATE TABLE normalschema.test_normalschema(id serial primary key);
 CREATE TABLE "strange.schema-IS".test_strangeschema(id serial primary key);
 CREATE TABLE public.test_nopkey(id int);
+CREATE TABLE public.test_pkey_ri_full(id int primary key);
+ALTER TABLE public.test_pkey_ri_full REPLICA IDENTITY FULL;
 CREATE UNLOGGED TABLE public.test_unlogged(id int primary key);
 $$);
  replicate_ddl_command 
@@ -97,6 +99,12 @@ SELECT * FROM pglogical.replication_set_add_table('repset_replicate_all', 'test_
 ERROR:  table test_nopkey cannot be added to replication set repset_replicate_all
 DETAIL:  table does not have PRIMARY KEY and given replication set is configured to replicate UPDATEs and/or DELETEs
 HINT:  Add a PRIMARY KEY to the table
+SELECT * FROM pglogical.replication_set_add_table('repset_replicate_all', 'test_pkey_ri_full');
+ replication_set_add_table 
+---------------------------
+ t
+(1 row)
+
 -- success
 SELECT * FROM pglogical.replication_set_add_table('repset_replicate_instrunc', 'test_nopkey');
  replication_set_add_table 
@@ -120,9 +128,9 @@ ERROR:  table test_nopkey cannot be added to replication set default
 DETAIL:  table does not have PRIMARY KEY and given replication set is configured to replicate UPDATEs and/or DELETEs
 HINT:  Add a PRIMARY KEY to the table
 SELECT * FROM pglogical.alter_replication_set('repset_replicate_instrunc', replicate_update := true);
-ERROR:  replication set repset_replicate_instrunc cannot be altered to replicate UPDATEs or DELETEs because it contains tables without PRIMARY KEY
+ERROR:  replication set repset_replicate_instrunc cannot be altered to replicate UPDATEs and/or DELETEs because it contains tables without PRIMARY KEY
 SELECT * FROM pglogical.alter_replication_set('repset_replicate_instrunc', replicate_delete := true);
-ERROR:  replication set repset_replicate_instrunc cannot be altered to replicate UPDATEs or DELETEs because it contains tables without PRIMARY KEY
+ERROR:  replication set repset_replicate_instrunc cannot be altered to replicate UPDATEs and/or DELETEs because it contains tables without PRIMARY KEY
 -- Adding already-added fails
 \set VERBOSITY terse
 SELECT * FROM pglogical.replication_set_add_table('repset_replicate_all', 'public.test_publicschema');
@@ -210,12 +218,14 @@ SELECT pglogical.replicate_ddl_command($$
 	DROP SCHEMA normalschema CASCADE;
 	DROP SCHEMA "strange.schema-IS" CASCADE;
 	DROP TABLE public.test_nopkey CASCADE;
+	DROP TABLE public.test_pkey_ri_full CASCADE;
 	DROP TABLE public.test_unlogged CASCADE;
 $$);
 NOTICE:  drop cascades to table normalschema.test_normalschema
 NOTICE:  drop cascades to 2 other objects
 NOTICE:  drop cascades to table "strange.schema-IS".test_strangeschema
 NOTICE:  drop cascades to table "strange.schema-IS".test_strangeschema membership in replication set repset_replicate_insupd
+NOTICE:  drop cascades to 2 other objects
 NOTICE:  drop cascades to 2 other objects
  replicate_ddl_command 
 -----------------------
